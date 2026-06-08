@@ -1,0 +1,6 @@
+{
+  "name": "Cardume",
+  "description": "Cardume é uma plataforma colaborativa de Kanban e gestão de projetos desenhada para apoiar relações saudáveis, bem-estar coletivo, reflexões e análise dinâmica ética com inteligência artificial.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
