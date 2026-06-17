@@ -11,7 +11,10 @@ import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 // Load environment variables
+// Load base configuration from .env
 dotenv.config();
+// Override with .env.local if it exists (.env.local takes precedence)
+dotenv.config({ path: '.env.local', override: true });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

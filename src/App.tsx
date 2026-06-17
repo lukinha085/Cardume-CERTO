@@ -38,8 +38,9 @@ import {
   HelpCircle
 } from "lucide-react";
 
-import { Task, Message, TeamHealth, Member, TaskPriority, TaskColumn } from "./types";
+import { Task, Message, TeamHealth, Member, TaskPriority, TaskColumn, User } from "./types";
 import { SAMPLE_MEMBERS, INITIAL_TASKS, INITIAL_MESSAGES, INITIAL_TEAM_HEALTH } from "./data";
+import { supabase } from "./supabase";
 
 export default function App() {
   // Navigation State: 'landing' | 'login' | 'workspace'
@@ -64,10 +65,16 @@ export default function App() {
     return saved ? JSON.parse(saved) : INITIAL_TEAM_HEALTH;
   });
 
-  // User details
+  // Auth State
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authError, setAuthError] = useState<string>("");
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  
+  // Default user for workspace (fallback)
   const currentUser = SAMPLE_MEMBERS.find(m => m.id === "m4") || SAMPLE_MEMBERS[3];
-  const [loginEmail, setLoginEmail] = useState("seu@email.com");
-  const [loginPassword, setLoginPassword] = useState("password");
   
   // UI Interactions
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
@@ -101,6 +108,99 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem("cardume_team_health", JSON.stringify(teamHealth));
   }, [teamHealth]);
+
+  // Auth listener and auto-redirect
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const user: User = {
+            id: session.user.id,
+            email: session.user.email || "",
+            user_metadata: session.user.user_metadata
+          };
+          setAuthUser(user);
+          setCurrentView('workspace');
+        }
+      } catch (e) {
+        console.error("Auth check failed:", e);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    checkAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        const user: User = {
+          id: session.user.id,
+          email: session.user.email || "",
+          user_metadata: session.user.user_metadata
+        };
+        setAuthUser(user);
+        setCurrentView('workspace');
+      } else {
+        setAuthUser(null);
+      }
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  // Handle sign in and sign up
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAuthError("");
+
+    if (!loginEmail || !loginPassword) {
+      setAuthError("Por favor, preencha todos os campos.");
+      return;
+    }
+
+    try {
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({
+          email: loginEmail,
+          password: loginPassword
+        });
+        if (error) throw error;
+        showNotification("Conta criada! Verifique seu e-mail para confirmar.");
+        setIsSignUp(false);
+        setLoginEmail("");
+        setLoginPassword("");
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: loginEmail,
+          password: loginPassword
+        });
+        if (error) throw error;
+        showNotification("Sincronizado! Bem-vindo ao ecossistema Cardume.");
+      }
+    } catch (err: any) {
+      setAuthError(err.message || "Erro na autenticação.");
+    }
+  };
+
+  // Handle logout
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setAuthUser(null);
+      setCurrentView('landing');
+      showNotification("Desconectado do Cardume.");
+    } catch (err: any) {
+      console.error("Logout failed:", err);
+    }
+  };
+
+  // Protect workspace - redirect to login if no auth
+  useEffect(() => {
+    if (currentView === 'workspace' && !authUser && !authLoading) {
+      setCurrentView('login');
+    }
+  }, [currentView, authUser, authLoading]);
 
   // Handle single task selection mapping
   const openTaskDetail = (task: Task) => {
@@ -510,11 +610,7 @@ export default function App() {
             </div>
 
             {/* Inputs Form */}
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              setCurrentView('workspace');
-              showNotification("Sincronizado! Bem-vindo de volta ao ecossistema Cardume.");
-            }} className="space-y-5">
+            <form onSubmit={handleAuth} className="space-y-5">
               
               <div className="space-y-2">
                 <label className="font-label text-xs text-[#b9caca] pl-1 font-semibold block" htmlFor="email">
@@ -556,21 +652,47 @@ export default function App() {
 
               {/* Forgot link */}
               <div className="flex justify-end pt-1">
-                <a href="#" className="font-label text-xs text-[#00f5ff] hover:text-[#8ef5e1] hover:underline transition-all">
-                  Esqueceu sua senha?
-                </a>
+                {!isSignUp && (
+                  <a href="#" className="font-label text-xs text-[#00f5ff] hover:text-[#8ef5e1] hover:underline transition-all">
+                    Esqueceu sua senha?
+                  </a>
+                )}
               </div>
+
+              {/* Error message */}
+              {authError && (
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-red-400 text-xs">
+                  {authError}
+                </div>
+              )}
 
               {/* Action Button */}
               <button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-[#4ad8cc] to-[#00f5ff] hover:from-[#00f5ff] hover:to-[#4ad8cc] text-[#00373d] py-4 rounded-full font-display font-bold text-sm tracking-wide shadow-lg hover:shadow-[0_0_20px_rgba(0,245,255,0.4)] flex items-center justify-center gap-2 hover:scale-[1.02] transition-all duration-300 cursor-pointer"
+                type="submit"
+                disabled={authLoading}
+                className="w-full bg-gradient-to-r from-[#4ad8cc] to-[#00f5ff] hover:from-[#00f5ff] hover:to-[#4ad8cc] text-[#00373d] py-4 rounded-full font-display font-bold text-sm tracking-wide shadow-lg hover:shadow-[0_0_20px_rgba(0,245,255,0.4)] flex items-center justify-center gap-2 hover:scale-[1.02] transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>Entrar no Workspace</span>
+                <span>{isSignUp ? "Criar Conta" : "Entrar no Workspace"}</span>
                 <ArrowRight size={16} />
               </button>
 
             </form>
+
+            <div className="mt-6 text-center">
+              <p className="font-label text-xs text-[#b9caca] mb-3">
+                {isSignUp ? "Já tem uma conta?" : "Não tem uma conta?"}
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setAuthError("");
+                }}
+                className="font-label text-xs text-[#00f5ff] hover:text-[#8ef5e1] font-semibold transition-colors"
+              >
+                {isSignUp ? "Entrar" : "Criar Conta"}
+              </button>
+            </div>
 
             <div className="mt-10 pt-6 border-t border-[#3a494a]/30 text-center">
               <p className="font-label text-[11px] text-[#b9caca] leading-relaxed">
@@ -596,7 +718,7 @@ export default function App() {
       {/* ========================================================
           3. MAIN WORKSPACE / APP SHELL (BOARD, INSIGHTS & MEMBERS)
           ======================================================== */}
-      {currentView === 'workspace' && (
+      {currentView === 'workspace' && authUser && (
         <div className="flex-1 flex flex-col md:flex-row pt-20">
           
           {/* Top Header Navigation Bar */}
@@ -639,7 +761,7 @@ export default function App() {
               </button>
 
               <div 
-                onClick={() => setCurrentView('landing')}
+                onClick={handleLogout}
                 title="Sair / Desconectar"
                 className="w-10 h-10 rounded-full border border-[#00f5ff]/35 overflow-hidden shadow-inner cursor-pointer hover:border-[#00f5ff] transition-all"
               >
