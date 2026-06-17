@@ -1291,7 +1291,7 @@ export default function App() {
                             </div>
                           </div>
 
-                          <div className="p-5 rounded-2xl bg-[#072329]/60 border border-[#00f5ff]/10">
+                          <div className="p-5 rounded-2xl bg-[#072329]/60 border border-[#00f5ff]/10 max-h-64 overflow-y-auto">
                             <p className="font-display font-medium text-sm md:text-base text-white leading-relaxed">
                               {aiAnalyzingHealth ? (
                                 <span className="flex items-center gap-3 animate-pulse">
@@ -1601,7 +1601,7 @@ export default function App() {
                       </button>
                     </div>
 
-                    <div className="text-xs text-white leading-relaxed space-y-2">
+                    <div className="text-xs text-white leading-relaxed space-y-2 max-h-96 overflow-y-auto">
                       {aiAnalyzingTask ? (
                         <p className="animate-pulse flex items-center gap-2 text-[#b9caca]">
                           <Waves size={12} className="animate-spin text-[#00f5ff]" />
