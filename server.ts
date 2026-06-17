@@ -71,7 +71,7 @@ Baseado na conversa acima, preencha os campos de análise de forma extremamente 
       `;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
+        model: "gemini-2.5-flash",
         contents: prompt,
         config: {
           systemInstruction: "Você é o assistente empático Cardume. Sua missão é apoiar a sincronia do time por meio de reflexões profundas sobre as dinâmicas humanas, identificando como guiar o time com cuidado, sem focar em velocidade de entrega fria, e sim em bem-estar e conexões saudáveis.",
