@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-label: "Manrope", sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: #00161c;
+    color: #cce7ef;
+    font-family: var(--font-sans);
+  }
+}
+
+/* Glassmorphism Inner Glow Utility */
+.glass-glow {
+  box-shadow: inset 1px 1px 0px 0px rgba(0, 245, 255, 0.15), 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+/* Biomimetic floating animation */
+@keyframes float-soft {
+  0% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.01); }
+  100% { transform: translateY(0px) scale(1); }
+}
+.animate-float {
+  animation: float-soft 6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+
+/* Liquid fill shimmer effect */
+@keyframes fluid-flow {
+  0% { transform: translate(-30%, -30%) rotate(45deg); }
+  100% { transform: translate(30%, 30%) rotate(45deg); }
+}
+.liquid-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.liquid-shimmer::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent, rgba(0, 245, 255, 0.15), transparent);
+  transform: rotate(45deg);
+  animation: fluid-flow 4s infinite linear;
+}
+
+/* Bioluminescent pulses */
+@keyframes pulse-bioluminescent {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
+    border-color: rgba(0, 245, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(0, 245, 255, 0.5);
+    border-color: rgba(0, 245, 255, 0.6);
+  }
+}
+.pulse-bioluminescent {
+  animation: pulse-bioluminescent 4s ease-in-out infinite;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #001115;
+}
+::-webkit-scrollbar-thumb {
+  background: #1f383f;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #00dce5;
+}
